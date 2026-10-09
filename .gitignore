@@ -1,0 +1,17 @@
+# Unity rebuilds these
+
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Bb]uild/
+/[Bb]uilds/
+# Code editor files
+.vs/
+.idea/
+*.csproj
+*.sln
+# ML-Agents
+/results/
+/mlagents-env/
