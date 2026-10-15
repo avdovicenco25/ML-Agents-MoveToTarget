@@ -28,11 +28,11 @@ public class MoveToTargetAgent : Agent
 
     {
 
-        transform.localPosition = new Vector3(
+        transform.localPosition = new Vector3(0f, 0.5f, -2f);
 
-        Random.Range(-4f, 4f), 0.5f, Random.Range(-4f, 0f));
+        //Random.Range(-4f, 4f), 0.5f, Random.Range(-4f, 0f));
 
-        target.localPosition = new Vector3(-3.18f, 0.5f, 3.2f);
+        //target.localPosition = new Vector3(-3.18f, 0.5f, 3.2f);
 
         //Random.Range(-4f, 4f), 0.5f, Random.Range(1f, 4f));
 
