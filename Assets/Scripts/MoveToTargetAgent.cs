@@ -7,6 +7,7 @@ using Unity.MLAgents.Sensors;
 using UnityEngine;
 
 using UnityEngine.InputSystem;
+using UnityEngine.Splines;
 
 public class MoveToTargetAgent : Agent
 
@@ -14,10 +15,14 @@ public class MoveToTargetAgent : Agent
 
     [SerializeField] private Transform target;
 
-    [SerializeField] private float moveSpeed = 3f;
+    [SerializeField] private float moveSpeed;
 
     [SerializeField] private Renderer floor;
 
+    [SerializeField] private Spline roadSpline;
+
+
+    [Header("Colors")]
     [SerializeField] private Color winColour = Color.green;
 
     [SerializeField] private Color loseColour = Color.red;
@@ -42,6 +47,8 @@ public class MoveToTargetAgent : Agent
     {
 
         sensor.AddObservation(transform.localPosition); // 3
+
+        
 
         sensor.AddObservation(target.localPosition); // 3
 
