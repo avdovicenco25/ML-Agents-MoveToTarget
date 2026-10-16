@@ -19,17 +19,10 @@ public class CameraManager : MonoBehaviour
     public void SwitchCamera()
     {
         cameras[cameraActive].SetActive(false);
-        if (cameras[cameraActive ++] != null)
+        cameraActive = (cameraActive + 1) % cameras.Length;
+        if (cameras[cameraActive] != null)
         {
-            Debug.Log(cameraActive + "before ++");
-            cameraActive++;
-            Debug.Log(cameraActive + "after ++");
             cameras[cameraActive].SetActive(true);
-        }
-        else
-        {
-            cameraActive = 0;
-            cameras[0].SetActive(true);
         }
     }
 
