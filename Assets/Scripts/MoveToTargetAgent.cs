@@ -10,27 +10,27 @@ using float3 = Unity.Mathematics.float3; // alias avoids the Random.Range ambigu
 public class MoveToTargetAgent : Agent
 {
     [Header("References")]
-    [SerializeField] private SplineContainer road;   // the spline GameObject (NOT a Spline field)
-    [SerializeField, FormerlySerializedAs("floor")] private Renderer agentMesh; // optional: the cube's Mesh Renderer, flashes green/red
+    [SerializeField] private SplineContainer road;   
+    [SerializeField, FormerlySerializedAs("floor")] private Renderer agentMesh; 
 
     [Header("Car")]
     [SerializeField] private float maxSpeed = 12f;
     [SerializeField] private float acceleration = 15f;
-    [SerializeField] private float turnSpeed = 120f; // degrees per second
+    [SerializeField] private float turnSpeed = 120f; 
     [SerializeField] private float spawnHeight = 0.5f;
 
     [Header("Road")]
-    [SerializeField] private float halfRoadWidth = 4f;   // distance from spline to wall
-    [SerializeField] private float lookAheadNear = 5f;   // metres
-    [SerializeField] private float lookAheadFar = 15f;   // metres
+    [SerializeField] private float halfRoadWidth = 4f;   
+    [SerializeField] private float lookAheadNear = 5f;   
+    [SerializeField] private float lookAheadFar = 15f;   
     [SerializeField, Range(0f, 1f)] private float randomStartChance = 0.7f;
 
     [Header("Rewards")]
-    [SerializeField] private float progressReward = 1f;     // total reward for driving the whole track
+    [SerializeField] private float progressReward = 1f;     
     [SerializeField] private float finishBonus = 1f;
-    [SerializeField] private float wallHitPenalty = 0.05f;  // once, when first touching a wall
-    [SerializeField] private float wallStayPenalty = 0.005f; // every step while scraping a wall
-    [SerializeField] private float stuckSeconds = 8f;       // no new progress for this long = episode ends
+    [SerializeField] private float wallHitPenalty = 0.05f;  
+    [SerializeField] private float wallStayPenalty = 0.005f; 
+    [SerializeField] private float stuckSeconds = 8f;       
 
     [Header("Colors")]
     [SerializeField] private Color winColour = Color.green;
@@ -40,10 +40,10 @@ public class MoveToTargetAgent : Agent
     private Rigidbody rb;
     private float trackLength;
 
-    // road state, refreshed in CollectObservations
+    
     private float curT, lastT, bestT;
-    private float lateral;        // -1..1 = left/right edge of the road, 0 = centre
-    private Vector3 tangent;      // road direction at the nearest point (flat)
+    private float lateral;        
+    private Vector3 tangent;      
 
     private float lastProgressTime;
     private bool touchingWall;
@@ -57,8 +57,6 @@ public class MoveToTargetAgent : Agent
 
     public override void OnEpisodeBegin()
     {
-        // Start at the beginning most of the time, otherwise somewhere along the track
-        // (so the agent also practises the later corners instead of only the first one).
         float startT = Random.value < randomStartChance ? Random.Range(0f, 0.9f) : 0f;
 
         Vector3 pos = road.EvaluatePosition(startT);
@@ -84,32 +82,31 @@ public class MoveToTargetAgent : Agent
     {
         UpdateRoadState();
 
-        // speed in the car's own frame (forward / sideways)
+        
         Vector3 v = transform.InverseTransformDirection(rb.linearVelocity);
-        sensor.AddObservation(v.z / maxSpeed);                                          // 1
-        sensor.AddObservation(v.x / maxSpeed);                                          // 1
+        sensor.AddObservation(v.z / maxSpeed);                                          
+        sensor.AddObservation(v.x / maxSpeed);                                          
 
-        // how far the car is turned away from the road direction
-        sensor.AddObservation(Vector3.SignedAngle(transform.forward, tangent, Vector3.up) / 180f); // 1
+        
+        sensor.AddObservation(Vector3.SignedAngle(transform.forward, tangent, Vector3.up) / 180f); 
 
-        // which side of the centre line, and how far
-        sensor.AddObservation(Mathf.Clamp(lateral, -2f, 2f));                           // 1
+        
+        sensor.AddObservation(Mathf.Clamp(lateral, -2f, 2f));                           
 
-        // where the road goes next, in the car's own frame (lets it see corners coming)
-        AddLookAhead(sensor, lookAheadNear);                                            // 2
-        AddLookAhead(sensor, lookAheadFar);                                             // 2
-        // Total = 8  -> Behavior Parameters "Space Size" must be 8
-        // (the Ray Perception Sensor adds its own observations automatically)
+        
+        AddLookAhead(sensor, lookAheadNear);                                            
+        AddLookAhead(sensor, lookAheadFar);                                             
     }
 
     public override void OnActionReceived(ActionBuffers actions)
     {
         float steer = Mathf.Clamp(actions.ContinuousActions[0], -1f, 1f);
-        float throttle = Mathf.Clamp(actions.ContinuousActions[1], -1f, 1f); // negative = brake
+        float throttle = Mathf.Clamp(actions.ContinuousActions[1], -1f, 1f); 
 
-        // --- movement (simple arcade car) ---
+        //movement
         float speed = Mathf.Max(0f, Vector3.Dot(rb.linearVelocity, transform.forward));
-        speed = Mathf.Clamp(speed + throttle * acceleration * Time.fixedDeltaTime, 0f, maxSpeed);
+        float targetSpeed = (throttle + 1f) * 0.5f * maxSpeed; // -1 = stop, +1 = full speed
+        speed = Mathf.MoveTowards(speed, targetSpeed, acceleration * Time.fixedDeltaTime);
 
         rb.MoveRotation(rb.rotation * Quaternion.Euler(0f, steer * turnSpeed * Time.fixedDeltaTime, 0f));
         Vector3 vel = transform.forward * speed;
@@ -117,8 +114,7 @@ public class MoveToTargetAgent : Agent
         rb.linearVelocity = vel;
         rb.angularVelocity = Vector3.zero;
 
-        // --- rewards ---
-        // 1) progress along the spline, worth more when close to the centre line
+        //rewards
         float dT = Mathf.Clamp(curT - lastT, -0.1f, 0.1f);
         lastT = curT;
         if (dT > 0f)
@@ -128,20 +124,20 @@ public class MoveToTargetAgent : Agent
         }
         else
         {
-            AddReward(dT * progressReward); // going backwards is punished
+            AddReward(dT * progressReward); //going backwards is punished
         }
 
-        // 2) scraping along a wall (flag is set by OnCollisionStay)
+        //going against a wall
         if (touchingWall)
         {
             AddReward(-wallStayPenalty);
             touchingWall = false;
         }
 
-        // 3) small time penalty so it learns to hurry
+        //small time penalty so it learns to hurry
         if (MaxStep > 0) AddReward(-1f / MaxStep);
 
-        // 4) stuck check: no new best progress for a while -> end the episode
+        //check if stuck
         if (curT > bestT + 0.001f)
         {
             bestT = curT;
@@ -165,11 +161,10 @@ public class MoveToTargetAgent : Agent
         continuous[1] = (kb.wKey.isPressed ? 1f : 0f) - (kb.sKey.isPressed ? 1f : 0f); // throttle
     }
 
-    // ---------- helpers ----------
 
     private void UpdateRoadState()
     {
-        // nearest point on the spline (the query works in the container's local space)
+        // nearest point on the spline
         Vector3 local = road.transform.InverseTransformPoint(transform.position);
         SplineUtility.GetNearestPoint(road.Spline, (float3)local, out float3 nearestLocal, out float t, 16, 3);
         curT = t;
@@ -199,7 +194,6 @@ public class MoveToTargetAgent : Agent
         if (agentMesh != null) agentMesh.material.color = c;
     }
 
-    // ---------- collisions ----------
 
     private void OnTriggerEnter(Collider other)
     {
